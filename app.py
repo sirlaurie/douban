@@ -48,6 +48,7 @@ def crawl(category, title):
         author = item.get('abstract', '')
         if name and 'subject' in item_url:
             kwargs = {
+                'id': item_url.split('/')[-2],
                 'url': item_url,
                 'name': name,
                 'score': score,
