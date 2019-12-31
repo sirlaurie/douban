@@ -28,6 +28,7 @@
          }
 
 4.  启动服务
+
     `uwsgi --ini wsgi.ini`
 
     `brew services restart nginx`
