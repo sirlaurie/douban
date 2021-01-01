@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: loricheung
+import sys
 import requests
 import execjs
 import re
@@ -15,18 +16,22 @@ book_url = "https://search.douban.com/book/subject_search?search_text={title}&ca
 movie_url = (
     "https://search.douban.com/movie/subject_search?search_text={title}&cat=1002"
 )
-headers = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6",
-    "cookie": 'll="108296"; bid=ieDyF9S_Pvo; __utma=30149280.1219785301.1576592769.1576592769.1576592769.1; __utmc=30149280; __utmz=30149280.1576592769.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _vwo_uuid_v2=DF618B52A6E9245858190AA370A98D7E4|0b4d39fcf413bf2c3e364ddad81e6a76; ct=y; dbcl2="40219042:K/CjqllYI3Y"; ck=FsDX; push_noty_num=0; push_doumail_num=0; douban-fav-remind=1; ap_v=0,6.0',
-    "host": "search.douban.com",
-    "referer": "https://movie.douban.com/",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-site",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36 Edg/79.0.309.56",
-}
+default_headers = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Accept-Encoding': 'gzip, deflate',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7',
+    'Cache-Control': 'max-age=0',
+    'Connection': 'keep-alive',
+    'Cookie': 'bid=g45DUsaXGO4; ll="108296"; push_doumail_num=0; push_noty_num=0; douban-fav-remind=1; _vwo_uuid_v2=DD838DB5809029D29EA2682C7BD69CDA3|c0bdf5263233b42569c736b90c28f8c7; viewed="2308234_27615777"; dbcl2="40219042:PKtobXAqaRs"; ck=T7Vf; douban-profile-remind=1; ap_v=0,6.0',
+    'Host': 'search.douban.com',
+    'Referer': 'https://movie.douban.com/',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    }
 
 
 @app.route("/")
@@ -62,11 +67,21 @@ def crawl(category, title):
 
 
 def request_from(url):
+    headers = default_headers
+    headers.update({"Referer": url})
     resp = requests.get(url, headers=headers)
-    html = re.search('window.__DATA__ = "([^"]+)"', resp.text).group(1)
+    if resp.status_code == 200:
+        html = re.search('window.__DATA__ = "(.+)"', resp.text).group(1)
+    else:
+        sys.exit("response status code: ", resp.status_code)
 
     with open("main.js", "r") as f:
         decrypt_js = f.read()
     ctx = execjs.compile(decrypt_js)
     data = ctx.call("decrypt", html)
     return data
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        print(crawl('movie', 'togo'))
