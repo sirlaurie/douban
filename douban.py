@@ -21,6 +21,13 @@ headers = {
     'Cookie': 'll="108296"; bid=iytqR0heGuI'
 }
 
+search_mode = {
+    "v": ['movie', 'tv'],
+    "s": ['music'],
+    "b": ['book'],
+    "o": ['app', 'game', 'event', 'drama']
+}
+
 target_url = {
     "movie": "https://movie.douban.com/subject/",
     "book": "https://book.douban.com/subject/",
@@ -56,8 +63,7 @@ class Douban(object):
     def _download_thumb(self, url):
         if "?" in url:
             url = url.split('?')[0]
-        os.system('curl --parallel --no-progress-meter --output-dir cache -O ' + url)
-        # os.system('curl -O ' + CACHE_FOLDER + cover + ' ' + url)
+        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
     def search(self, keyword):
         request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
@@ -65,11 +71,10 @@ class Douban(object):
         result = response.read().decode("utf-8")
 
         data = json.loads(result)
-        # print data
         feedback = Feedback()
         for item in data['items']:
             target_type = item["target_type"]
-            if target_type not in target_url.keys():
+            if (target_type not in target_url.keys() or target_type not in search_mode[mode]):
                 continue
             url = target_url[target_type] + item["target"]["id"]
             cover_url = item['target']['cover_url']
@@ -98,6 +103,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.search == 'c':
         clear()
+    douban = Douban()
+    if ' ' in args.search:
+        all_args = args.search.split()
+        mode, kw = all_args[0], all_args[1:]
+        douban.search(keyword=' '.join(kw), mode=mode)
     else:
-        douban = Douban()
         douban.search(args.search)
