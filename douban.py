@@ -25,7 +25,8 @@ search_mode = {
     "v": ['movie', 'tv'],
     "s": ['music'],
     "b": ['book'],
-    "o": ['app', 'game', 'event', 'drama']
+    "o": ['app', 'game', 'event', 'drama'],
+    "all": ['movie', 'tv', 'music', 'book', 'app', 'game', 'event', 'drama']
 }
 
 target_url = {
@@ -65,7 +66,7 @@ class Douban(object):
             url = url.split('?')[0]
         return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
-    def search(self, keyword):
+    def search(self, keyword, mode=None):
         request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
         response = urllib2.urlopen(request)
         result = response.read().decode("utf-8")
@@ -74,16 +75,19 @@ class Douban(object):
         feedback = Feedback()
         for item in data['items']:
             target_type = item["target_type"]
-            if (target_type not in target_url.keys() or target_type not in search_mode[mode]):
+            if mode:
+                query_mode = search_mode[mode]
+            else:
+                query_mode = search_mode['all']
+            if (target_type not in target_url.keys() or target_type not in query_mode):
                 continue
             url = target_url[target_type] + item["target"]["id"]
             cover_url = item['target']['cover_url']
             if '?' in cover_url:
                 cover_url = cover_url.split('?')[0]
             cover = cover_url.split('/')[-1].encode('utf-8')
-            self._download_thumb(cover_url)
+            _ = self._download_thumb(cover_url)
             title = item["target"]["title"]
-            # value = item["target"]["rating"]["value"]
             star = item["target"]["rating"]["star_count"]
             info = item["target"]["card_subtitle"]
             decimal, integer = math.modf(float(star))
@@ -92,7 +96,7 @@ class Douban(object):
             else:
                 star_info = (int(integer) * '★').decode('utf-8')
             icon = os.path.join(cache_folder, cover)
-            feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, type=target_type, icon=icon)
+            feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
 
         feedback.output()
 
@@ -101,6 +105,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('search', type=str)
     args = parser.parse_args()
+
     if args.search == 'c':
         clear()
     douban = Douban()
