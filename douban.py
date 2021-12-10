@@ -64,10 +64,10 @@ class Douban(object):
     def _download_thumb(self, url):
         if "?" in url:
             url = url.split('?')[0]
-        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
+        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s >/dev/null 2>&1' % url)
 
     def search(self, keyword, mode=None):
-        request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
+        request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=40&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
         response = urllib2.urlopen(request)
         result = response.read().decode("utf-8")
 
@@ -79,25 +79,26 @@ class Douban(object):
                 query_mode = search_mode[mode]
             else:
                 query_mode = search_mode['all']
-            if (target_type not in target_url.keys() or target_type not in query_mode):
-                continue
-            url = target_url[target_type] + item["target"]["id"]
-            cover_url = item['target']['cover_url']
-            if '?' in cover_url:
-                cover_url = cover_url.split('?')[0]
-            cover = cover_url.split('/')[-1].encode('utf-8')
-            _ = self._download_thumb(cover_url)
-            title = item["target"]["title"]
-            star = item["target"]["rating"]["star_count"]
-            info = item["target"]["card_subtitle"]
-            decimal, integer = math.modf(float(star))
-            if decimal != 0.0:
-                star_info = (int(integer) * '★').decode('utf-8') + '☆'.decode('utf-8')
-            else:
-                star_info = (int(integer) * '★').decode('utf-8')
-            icon = os.path.join(cache_folder, cover)
-            feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
 
+            if (target_type in target_url.keys() and target_type in query_mode):
+                url = target_url[target_type] + item["target"]["id"]
+                cover_url = item['target']['cover_url']
+                if '?' in cover_url:
+                    cover_url = cover_url.split('?')[0]
+                cover = cover_url.split('/')[-1].encode('utf-8')
+                _ = self._download_thumb(cover_url)
+                title = item["target"]["title"]
+                star = item["target"]["rating"]["star_count"]
+                info = item["target"]["card_subtitle"]
+                decimal, integer = math.modf(float(star))
+                if decimal != 0.0:
+                    star_info = (int(integer) * '★').decode('utf-8') + '☆'.decode('utf-8')
+                else:
+                    star_info = (int(integer) * '★').decode('utf-8')
+                icon = os.path.join(cache_folder, cover)
+                feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
+        if len(feedback) == 0:
+            feedback.addItem(title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
         feedback.output()
 
 
@@ -108,10 +109,14 @@ if __name__ == '__main__':
 
     if args.search == 'c':
         clear()
+
     douban = Douban()
-    if ' ' in args.search:
-        all_args = args.search.split()
+    all_args = args.search.split()
+    if len(all_args) > 1:
         mode, kw = all_args[0], all_args[1:]
-        douban.search(keyword=' '.join(kw), mode=mode)
+        if mode in search_mode.keys():
+            douban.search(keyword=' '.join(kw), mode=mode)
+        else:
+            douban.search(keyword=args.search)
     else:
-        douban.search(args.search)
+        douban.search(keyword=args.search)
