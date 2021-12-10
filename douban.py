@@ -64,7 +64,7 @@ class Douban(object):
     def _download_thumb(self, url):
         if "?" in url:
             url = url.split('?')[0]
-        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s >/dev/null 2>&1' % url)
+        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
     def search(self, keyword, mode=None):
         request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=40&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
