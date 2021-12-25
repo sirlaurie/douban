@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 Pipfile
 Pipfile.lock
+*.alfredworkflow
 
 # C extensions
 *.so
