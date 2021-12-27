@@ -40,6 +40,30 @@ target_url = {
     "drama": "https://www.douban.com/drama/",
 }
 
+participant = {
+    'movie': 1,
+    'book': 2,
+    'tv': 3,
+    'music': 4,
+    'app': 5,
+    'game': 6,
+    'event': 7,
+    'drama': 8,
+    'doulist_cards': 9
+}
+
+def sorter(item):
+    try:
+        value = item['target']['rating']['value']
+    except:
+        value = -1
+    try:
+        year = item['target']['year']
+    except:
+        year = -1
+    return (participant[item['target_type']], -int(year), -float(value))
+
+
 cache_folder = 'cache'
 if not os.path.exists(cache_folder):
     os.mkdir(cache_folder)
@@ -67,36 +91,38 @@ class Douban(object):
         return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
     def search(self, keyword, mode=None):
-        request = urllib2.Request("https://frodo.douban.com//api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
+        request = urllib2.Request("https://frodo.douban.com/api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
         response = urllib2.urlopen(request)
         result = response.read().decode("utf-8")
 
         data = json.loads(result)
         feedback = Feedback()
-        for item in data['items']:
-            target_type = item["target_type"]
-            if mode:
-                query_mode = search_mode[mode]
-            else:
-                query_mode = search_mode['all']
-
-            if (target_type in target_url.keys() and target_type in query_mode):
-                url = target_url[target_type] + item["target"]["id"]
-                cover_url = item['target']['cover_url']
-                if '?' in cover_url:
-                    cover_url = cover_url.split('?')[0]
-                cover = cover_url.split('/')[-1].encode('utf-8')
-                _ = self._download_thumb(cover_url)
-                title = item["target"]["title"]
-                star = item["target"]["rating"]["star_count"]
-                info = item["target"]["card_subtitle"]
-                decimal, integer = math.modf(float(star))
-                if decimal != 0.0:
-                    star_info = (int(integer) * '★').decode('utf-8') + '☆'.decode('utf-8')
+        if data['count'] > 0:
+            sort_data = sorted(data['items'], key=sorter)
+            for item in sort_data:
+                target_type = item["target_type"]
+                if mode:
+                    query_mode = search_mode[mode]
                 else:
-                    star_info = (int(integer) * '★').decode('utf-8')
-                icon = os.path.join(cache_folder, cover)
-                feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
+                    query_mode = search_mode['all']
+
+                if (target_type in target_url.keys() and target_type in query_mode):
+                    url = target_url[target_type] + item["target"]["id"]
+                    cover_url = item['target']['cover_url']
+                    if '?' in cover_url:
+                        cover_url = cover_url.split('?')[0]
+                    cover = cover_url.split('/')[-1].encode('utf-8')
+                    _ = self._download_thumb(cover_url)
+                    title = item["target"]["title"]
+                    star = item["target"]["rating"]["star_count"]
+                    info = item["target"]["card_subtitle"]
+                    decimal, integer = math.modf(float(star))
+                    if decimal != 0.0:
+                        star_info = (int(integer) * '★').decode('utf-8') + '☆'.decode('utf-8')
+                    else:
+                        star_info = (int(integer) * '★').decode('utf-8')
+                    icon = os.path.join(cache_folder, cover)
+                    feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
         if len(feedback) == 0:
             feedback.addItem(title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
         feedback.output()
