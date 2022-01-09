@@ -26,7 +26,8 @@ search_mode = {
     "s": ['music'],
     "b": ['book'],
     "o": ['app', 'game', 'event', 'drama'],
-    "all": ['movie', 'tv', 'music', 'book', 'app', 'game', 'event', 'drama']
+    "p": ['person'],
+    "all": ['movie', 'tv', 'music', 'book', 'app', 'game', 'event', 'drama', 'person']
 }
 
 target_url = {
@@ -49,7 +50,8 @@ participant = {
     'game': 6,
     'event': 7,
     'drama': 8,
-    'doulist_cards': 9
+    'person': 9,
+    'doulist_cards': 10
 }
 
 def sorter(item):
