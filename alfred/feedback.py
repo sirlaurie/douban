@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from xml.etree import ElementTree
 import xml.sax.saxutils as saxutils
-import os, copy, random
-
-import core
+import copy, random
+from . import core
 
 class Item(object):
     def __init__(self, **kwargs):
@@ -17,7 +16,7 @@ class Item(object):
         self.icon_type = it if it in ['fileicon', 'filetype'] else None
 
         valid = kwargs.get('valid', None)
-        if isinstance(valid, (str, unicode)) and valid.lower() == 'no':
+        if isinstance(valid, str) and valid.lower() == 'no':
             valid = 'no'
         elif isinstance(valid, bool) and not valid:
             valid = 'no'
@@ -32,20 +31,20 @@ class Item(object):
             'type'          : kwargs.get('type', None)
         }
 
-        for key in self.content.keys():
-            if self.content[key] is None:
-                del self.content[key]
+        for k, v in copy.copy(self.content).items():
+            if not v:
+                self.content.pop(k)
 
-        for key in self.attrb.keys():
-            if self.attrb[key] is None:
-                del self.attrb[key]
+        for k, v in copy.copy(self.attrb).items():
+            if not v:
+                self.attrb.pop(k)
 
     def copy(self):
         return copy.copy(self)
 
     def getXMLElement(self):
         item = ElementTree.Element('item', self.attrb)
-        for (k, v) in self.content.iteritems():
+        for (k, v) in self.content.items():
             attrb = {}
             if k == 'icon' and self.icon_type:
                 attrb['type'] = self.icon_type
@@ -76,7 +75,7 @@ class Feedback(object):
         ele_tree = ElementTree.Element('items')
         for item in self.items:
             ele_tree.append(item.getXMLElement())
-        res = ElementTree.tostring(ele_tree, encoding='utf-8')
+        res = ElementTree.tostring(ele_tree, encoding='unicode')
         if unescape:
             return saxutils.unescape(res)
         return res

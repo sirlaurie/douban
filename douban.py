@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: loricheung
 import os
 import math
 import json
-import argparse
 import urllib
-import urllib2
+import argparse
 from alfred.feedback import Feedback
 
 
@@ -93,8 +92,8 @@ class Douban(object):
         return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
     def search(self, keyword, mode=None):
-        request = urllib2.Request("https://frodo.douban.com/api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.quote(keyword), None, headers)
-        response = urllib2.urlopen(request)
+        request = urllib.request.Request("https://frodo.douban.com/api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.parse.quote(keyword), data=None, headers=headers)
+        response = urllib.request.urlopen(request)
         result = response.read().decode("utf-8")
 
         data = json.loads(result)
@@ -113,20 +112,20 @@ class Douban(object):
                     cover_url = item['target']['cover_url']
                     if '?' in cover_url:
                         cover_url = cover_url.split('?')[0]
-                    cover = cover_url.split('/')[-1].encode('utf-8')
+                    cover = cover_url.split('/')[-1]
                     _ = self._download_thumb(cover_url)
                     title = item["target"]["title"]
                     star = item["target"]["rating"]["star_count"]
                     info = item["target"]["card_subtitle"]
                     decimal, integer = math.modf(float(star))
                     if decimal != 0.0:
-                        star_info = (int(integer) * '★').decode('utf-8') + '☆'.decode('utf-8')
+                        star_info = (int(integer) * '★') + '☆'
                     else:
-                        star_info = (int(integer) * '★').decode('utf-8')
+                        star_info = (int(integer) * '★')
                     icon = os.path.join(cache_folder, cover)
                     feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
         if len(feedback) == 0:
-            feedback.addItem(title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
+            feedback.addItem(uid='0', title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
         feedback.output()
 
 

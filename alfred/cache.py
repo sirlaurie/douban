@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, json, time, shutil
+from . import core
 
-import core
-##
-# {
-#     'expire_time'    : 0,
-#     'data'           : {} 
-# }
 
 CACHE_FOLDER = os.path.expanduser('~/Library/Caches/com.runningwithcrayons.Alfred-2/Workflow Data/')
 
@@ -28,7 +23,7 @@ class Cache(object):
         try:
             with open(path, 'r') as f:
                 cache = json.load(f)
-        except Exception, e:
+        except Exception:
             os.remove(path)
             return
         # 过期
@@ -46,7 +41,7 @@ class Cache(object):
                     'data'          : data
                 }
                 json.dump(cache, f)
-        except Exception, e:
+        except Exception:
             pass
 
     def delete(self, name):

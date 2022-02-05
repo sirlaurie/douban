@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os, json
-
-import core
+from . import core
 
 CONFIG_FOLDER = os.path.expanduser('~/Library/Application Support/Alfred 2/Workflow Data/')
 
@@ -17,7 +16,7 @@ class Config(object):
             try:
                 with open(self.configFile, 'r') as f:
                     self.configs = json.load(f)
-            except Exception, e:
+            except Exception:
                 pass
         if not isinstance(self.configs, dict):
             self.configs = {}
@@ -30,12 +29,12 @@ class Config(object):
         return self.configs.get(key, default)
 
     def set(self, **kwargs):
-        for (k, v) in kwargs.iteritems():
+        for (k, v) in kwargs.items():
             self.configs[k] = v
         self.save()
 
     def delete(self, key):
-        if not self.configs.has_key(key):
+        if key not in self.configs:
             return
         self.configs.pop(key)
         self.save()

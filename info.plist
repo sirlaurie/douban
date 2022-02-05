@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>bundleid</key>
-	<string>1.0.2</string>
+	<string>1.1.5</string>
 	<key>category</key>
 	<string>Productivity</string>
 	<key>connections</key>
@@ -35,30 +35,6 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>concurrently</key>
-				<false/>
-				<key>escaping</key>
-				<integer>102</integer>
-				<key>script</key>
-				<string>query=$1
-open $query</string>
-				<key>scriptargtype</key>
-				<integer>1</integer>
-				<key>scriptfile</key>
-				<string></string>
-				<key>type</key>
-				<integer>0</integer>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.action.script</string>
-			<key>uid</key>
-			<string>2D112527-14FA-4766-A449-094356D0AF77</string>
-			<key>version</key>
-			<integer>2</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
 				<key>alfredfiltersresults</key>
 				<false/>
 				<key>alfredfiltersresultsmatchmode</key>
@@ -84,7 +60,7 @@ open $query</string>
 				<key>runningsubtext</key>
 				<string>正在查找 ...</string>
 				<key>script</key>
-				<string>/usr/bin/python douban.py "{query}"</string>
+				<string>$(which python3) douban.py "{query}"</string>
 				<key>scriptargtype</key>
 				<integer>0</integer>
 				<key>scriptfile</key>
@@ -105,9 +81,40 @@ open $query</string>
 			<key>version</key>
 			<integer>3</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>query=$1
+open $query</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>5</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>2D112527-14FA-4766-A449-094356D0AF77</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
 	</array>
 	<key>readme</key>
-	<string>一站式检索豆瓣图书, 电影, 音乐, 支持缩略图展示</string>
+	<string>一站式检索豆瓣图书, 电影, 音乐, 支持缩略图展示
+使用方式:
+	mm &lt;query&gt;
+
+支持类别过滤, 目前有四种模式--影视,音乐, 图书, 其他, 对应关键词为--v, s, b, o.
+
+如,只搜索音乐:
+	mm s easy on me</string>
 	<key>uidata</key>
 	<dict>
 		<key>2D112527-14FA-4766-A449-094356D0AF77</key>
@@ -125,11 +132,9 @@ open $query</string>
 			<integer>245</integer>
 		</dict>
 	</dict>
-	<key>variablesdontexport</key>
-	<array/>
 	<key>version</key>
-	<string>0.2</string>
+	<string>1.2.0</string>
 	<key>webaddress</key>
-	<string></string>
+	<string>https://github.com/sirlaurie/douban</string>
 </dict>
 </plist>
