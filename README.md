@@ -4,7 +4,7 @@
 
 #### 此项目已经支持 Python3, 由于 Python3 并非 macOS 内置, 所以你需要手动安装.
 
-#### 安装方法请搜索"brew install python3"
+#### 安装方法请搜索`brew install python3`
 
 ---
 
