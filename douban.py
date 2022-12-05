@@ -4,10 +4,12 @@
 import os
 import math
 import json
-import urllib
 import argparse
+from types import NoneType
+from typing import Dict, List
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 from alfred.feedback import Feedback
-
 
 headers = {
     'Host': 'frodo.douban.com',
@@ -20,7 +22,7 @@ headers = {
     'Cookie': 'll="108296"; bid=iytqR0heGuI'
 }
 
-search_mode = {
+search_mode: Dict[str, List[str]] = {
     "v": ['movie', 'tv'],
     "s": ['music'],
     "b": ['book'],
@@ -50,7 +52,8 @@ participant = {
     'event': 7,
     'drama': 8,
     'person': 9,
-    'doulist_cards': 10
+    'doulist_cards': 10,
+    "doulist_cards": 11
 }
 
 def sorter(item):
@@ -86,21 +89,20 @@ class Douban(object):
     def __del__(self):
         pass
 
-    def _download_thumb(self, url):
+    def _download_thumb(self, url: str):
         if "?" in url:
             url = url.split('?')[0]
-        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
+        os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
-    def search(self, keyword, mode=None):
-        request = urllib.request.Request("https://frodo.douban.com/api/v2/search/weixin?start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916&q=" + urllib.parse.quote(keyword), data=None, headers=headers)
-        response = urllib.request.urlopen(request)
+    def search(self, keyword: str, mode: str | NoneType = ...):
+        req = Request(f"https://frodo.douban.com/api/v2/search/weixin?q={quote(keyword)}&start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916", data=None, headers=headers)
+        response = urlopen(req)
         result = response.read().decode("utf-8")
 
         data = json.loads(result)
         feedback = Feedback()
         if data['count'] > 0:
-            sort_data = sorted(data['items'], key=sorter)
-            for item in sort_data:
+            for item in data['items']:
                 target_type = item["target_type"]
                 if mode:
                     query_mode = search_mode[mode]
@@ -113,10 +115,13 @@ class Douban(object):
                     if '?' in cover_url:
                         cover_url = cover_url.split('?')[0]
                     cover = cover_url.split('/')[-1]
-                    _ = self._download_thumb(cover_url)
-                    title = item["target"]["title"]
-                    star = item["target"]["rating"]["star_count"]
-                    info = item["target"]["card_subtitle"]
+                    self._download_thumb(cover_url)
+                    title = item.get("target", {}).get("title", "")
+                    try:
+                        star = item.get("target", {}).get("rating", {}).get("star_count", 0)
+                    except AttributeError:
+                        star = 0
+                    info = item.get("target", {}).get("card_subtitle", "")
                     decimal, integer = math.modf(float(star))
                     if decimal != 0.0:
                         star_info = (int(integer) * '★') + '☆'
@@ -125,7 +130,7 @@ class Douban(object):
                     icon = os.path.join(cache_folder, cover)
                     feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
         if len(feedback) == 0:
-            feedback.addItem(uid='0', title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
+            feedback.addItem(uid='0', title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % quote(keyword), icon='icon.png')
         feedback.output()
 
 
