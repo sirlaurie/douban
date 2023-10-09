@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 # @author: loricheung
 import os
+import re
 import math
 import json
+import urllib
 import argparse
-from types import NoneType
-from typing import Dict, List
-from urllib.parse import quote
-from urllib.request import Request, urlopen
 from alfred.feedback import Feedback
+
 
 headers = {
     'Host': 'frodo.douban.com',
@@ -19,10 +18,9 @@ headers = {
     'User-Agent':' Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E217 MicroMessenger/6.8.0(0x16080000) NetType/WIFI Language/en Branch/Br_trunk MiniProgramEnv/Mac',
     'Referer': 'https://servicewechat.com/wx2f9b06c1de1ccfca/84/page-frame.html',
     'Accept-Language':' en-us',
-    'Cookie': 'll="108296"; bid=iytqR0heGuI'
 }
 
-search_mode: Dict[str, List[str]] = {
+search_mode = {
     "v": ['movie', 'tv'],
     "s": ['music'],
     "b": ['book'],
@@ -52,8 +50,7 @@ participant = {
     'event': 7,
     'drama': 8,
     'person': 9,
-    'doulist_cards': 10,
-    "doulist_cards": 11
+    'doulist_cards': 10
 }
 
 def sorter(item):
@@ -89,16 +86,14 @@ class Douban(object):
     def __del__(self):
         pass
 
-    def _download_thumb(self, url: str):
-        if "?" in url:
-            url = url.split('?')[0]
-        os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
+    def _download_thumb(self, url):
+        url = re.sub(r"(?<=https://).*?/view", "img2.doubanio.com/view", url)
+        return os.system('nohup curl --parallel --no-progress-meter --output-dir cache -O %s &' % url)
 
-    def search(self, keyword: str, mode: str | NoneType = ...):
-        req = Request(f"https://frodo.douban.com/api/v2/search/weixin?q={quote(keyword)}&start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916", data=None, headers=headers)
-        response = urlopen(req)
+    def search(self, keyword, mode=None):
+        request = urllib.request.Request(f"https://frodo.douban.com/api/v2/search/weixin?q={urllib.parse.quote(keyword)}&start=0&count=20&apiKey=0ac44ae016490db2204ce0a042db2916", data=None, headers=headers)
+        response = urllib.request.urlopen(request)
         result = response.read().decode("utf-8")
-
         data = json.loads(result)
         feedback = Feedback()
         if data['count'] > 0:
@@ -115,13 +110,13 @@ class Douban(object):
                     if '?' in cover_url:
                         cover_url = cover_url.split('?')[0]
                     cover = cover_url.split('/')[-1]
-                    self._download_thumb(cover_url)
-                    title = item.get("target", {}).get("title", "")
+                    _ = self._download_thumb(cover_url)
+                    title = item["target"]["title"]
+                    info = item["target"]["card_subtitle"]
                     try:
-                        star = item.get("target", {}).get("rating", {}).get("star_count", 0)
-                    except AttributeError:
-                        star = 0
-                    info = item.get("target", {}).get("card_subtitle", "")
+                        star = item["target"]["rating"]["star_count"]
+                    except TypeError:
+                        star = 0.0
                     decimal, integer = math.modf(float(star))
                     if decimal != 0.0:
                         star_info = (int(integer) * '★') + '☆'
@@ -130,7 +125,7 @@ class Douban(object):
                     icon = os.path.join(cache_folder, cover)
                     feedback.addItem(title=title + u' ' + star_info, subtitle=info, arg=url, icon=icon)
         if len(feedback) == 0:
-            feedback.addItem(uid='0', title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % quote(keyword), icon='icon.png')
+            feedback.addItem(uid='0', title=u'未能搜索到结果, 请通过豆瓣搜索页面进行搜索', subtitle=u'按下回车键, 跳转到豆瓣', arg=u'https://search.douban.com/movie/subject_search?search_text=%s&cat=1002' % urllib.quote(keyword), icon='icon.png')
         feedback.output()
 
 
